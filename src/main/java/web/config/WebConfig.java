@@ -1,10 +1,13 @@
 package web.config;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -20,13 +23,18 @@ import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
+import java.util.Objects;
 import java.util.Properties;
 
 @Configuration
 @EnableWebMvc
 @EnableTransactionManagement
 @ComponentScan("web")
+@PropertySource("classpath:application.properties")
 public class WebConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private Environment env;
 
     private final ApplicationContext applicationContext;
 
@@ -55,10 +63,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/users?useSSL=false");
-        dataSource.setUsername("root");
-        dataSource.setPassword("1234");
+        dataSource.setDriverClassName(Objects.requireNonNull(env.getProperty("spring.datasource.driver-class-name")));
+        dataSource.setUrl(env.getProperty("spring.datasource.url"));
+        dataSource.setUsername(env.getProperty("spring.datasource.username"));
+        dataSource.setPassword(env.getProperty("spring.datasource.password"));
         return dataSource;
     }
 
@@ -70,9 +78,9 @@ public class WebConfig implements WebMvcConfigurer {
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
         Properties jpaProps = new Properties();
-        jpaProps.setProperty("hibernate.hbm2ddl.auto", "update");
-        jpaProps.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
-        jpaProps.setProperty("hibernate.show_sql", "true");
+        jpaProps.setProperty("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
+        jpaProps.setProperty("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect"));
+        jpaProps.setProperty("hibernate.show_sql", env.getProperty("spring.jpa.show-sql"));
 
         emf.setJpaProperties(jpaProps);
         return emf;
